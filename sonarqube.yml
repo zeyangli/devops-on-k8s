@@ -1,0 +1,121 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: sonarqube
+  name: sonarqube
+  namespace: devops
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: sonarqube
+  template:
+    metadata:
+      labels:
+        k8s-app: sonarqube
+      namespace: devops
+      name: sonarqube
+    spec:
+      containers:
+        - name: sonarqube
+          image: sonarqube:7.9.2-community
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9000
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: sonarqube-conf
+              mountPath: /opt/sonarqube/conf
+            - name: sonarqube-log
+              mountPath: /opt/sonarqube/logs
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/data
+            - name: sonarqube-extensions
+              mountPath: /opt/sonarqube/extensions
+      volumes:
+        - name: sonarqube-conf
+          hostPath: 
+            path: /data/devops/sonar/conf
+            type: Directory
+        - name: sonarqube-log
+          hostPath: 
+            path: /data/devops/sonar/logs
+            type: Directory
+        - name: sonarqube-data
+          hostPath: 
+            path: /data/devops/sonar/data
+            type: Directory
+        - name: sonarqube-extensions
+          hostPath: 
+            path: /data/devops/sonar/extensions
+            type: Directory
+      serviceAccountName: sonarqube
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-app: sonarqube
+  name: sonarqube
+  namespace: devops
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: sonarqube
+  name: sonarqube
+  namespace: devops
+spec:
+  type: NodePort
+  ports:
+    - name: web
+      port: 9000
+      targetPort: 9000
+      nodePort: 30090
+  selector:
+    k8s-app: sonarqube
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+ name: sonarqube
+ namespace: devops
+rules:
+ - apiGroups: [""]
+   resources: ["pods"]
+   verbs: ["create","delete","get","list","patch","update","watch"]
+ - apiGroups: [""]
+   resources: ["pods/exec"]
+   verbs: ["create","delete","get","list","patch","update","watch"]
+ - apiGroups: [""]
+   resources: ["pods/log"]
+   verbs: ["get","list","watch"]
+ - apiGroups: [""]
+   resources: ["secrets"]
+   verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+ name: sonarqube
+ namespace: devops
+roleRef:
+ apiGroup: rbac.authorization.k8s.io
+ kind: Role
+ name: sonarqube
+subjects:
+ - kind: ServiceAccount
+   name: sonarqube
+   namespace: devops
