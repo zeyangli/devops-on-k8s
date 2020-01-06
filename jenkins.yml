@@ -29,10 +29,10 @@ spec:
           image: jenkins/jenkins:2.211
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - containerPort: 30080
               name: web
               protocol: TCP
-            - containerPort: 50000
+            - containerPort: 30081
               name: agent
               protocol: TCP
           resources:
@@ -45,14 +45,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /login
-              port: 8080
+              port: 30080
             initialDelaySeconds: 60
             timeoutSeconds: 5
             failureThreshold: 12
           readinessProbe:
             httpGet:
               path: /login
-              port: 8080
+              port: 30080
             initialDelaySeconds: 60
             timeoutSeconds: 5
             failureThreshold: 12
@@ -62,6 +62,10 @@ spec:
           env:
             - name: JENKINS_HOME
               value: /var/lib/jenkins
+            - name: JENKINS_OPTS
+              value: --httpPort=30080
+            - name: JENKINS_SLAVE_AGENT_PORT
+              value: "30081"
       volumes:
         - name: jenkins-home
           hostPath: 
@@ -88,12 +92,12 @@ spec:
   type: NodePort
   ports:
     - name: web
-      port: 8080
-      targetPort: 8080
+      port: 30080
+      targetPort: 30080
       nodePort: 30080
     - name: slave
-      port: 50000
-      targetPort: 50000
+      port: 30081
+      targetPort: 30081
       nodePort: 30081
   selector:
     k8s-app: jenkins
