@@ -1,0 +1,132 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: jenkins
+  name: jenkins
+  namespace: devops
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: jenkins
+  template:
+    metadata:
+      labels:
+        k8s-app: jenkins
+      namespace: devops
+      name: jenkins
+    spec:
+      containers:
+        - name: jenkins
+          image: jenkins/jenkins:2.211
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: web
+              protocol: TCP
+            - containerPort: 50000
+              name: agent
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 12
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 12
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/lib/jenkins
+          env:
+            - name: JENKINS_HOME
+              value: /var/lib/jenkins
+      volumes:
+        - name: jenkins-home
+          hostPath: 
+            path: /data/devops/jenkins
+            type: Directory
+      serviceAccountName: jenkins
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-app: jenkins
+  name: jenkins
+  namespace: devops
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: jenkins
+  name: jenkins
+  namespace: devops
+spec:
+  type: NodePort
+  ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080
+    - name: slave
+      port: 50000
+      targetPort: 50000
+      nodePort: 30081
+  selector:
+    k8s-app: jenkins
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+ name: jenkins
+ namespace: devops
+rules:
+ - apiGroups: [""]
+   resources: ["pods"]
+   verbs: ["create","delete","get","list","patch","update","watch"]
+ - apiGroups: [""]
+   resources: ["pods/exec"]
+   verbs: ["create","delete","get","list","patch","update","watch"]
+ - apiGroups: [""]
+   resources: ["pods/log"]
+   verbs: ["get","list","watch"]
+ - apiGroups: [""]
+   resources: ["secrets"]
+   verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+ name: jenkins
+ namespace: devops
+roleRef:
+ apiGroup: rbac.authorization.k8s.io
+ kind: Role
+ name: jenkins
+subjects:
+ - kind: ServiceAccount
+   name: jenkins
+   namespace: devops
