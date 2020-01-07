@@ -3,8 +3,7 @@
 
 
 
-
-## 直接使用的Docker运行
+## Docker运行【原始】
 ```
 #!/bin/bash
 
@@ -76,4 +75,8 @@ esac
 ```
 
 
-## K8S中迁移
+## K8S中部署
+```
+kubectl create -f .
+
+```
