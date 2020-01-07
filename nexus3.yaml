@@ -49,10 +49,10 @@ metadata:
  name: nexus3
  namespace: devops
  labels:
-   app: nexus3
+   k8s-app: nexus3
 spec:
  selector:
-   app: nexus3
+   k8s-app: nexus3
  type: NodePort
  ports:
  - name: web
