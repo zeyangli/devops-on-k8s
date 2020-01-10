@@ -1,9 +1,3 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: devops
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -24,6 +18,10 @@ spec:
       namespace: devops
       name: jenkins
     spec:
+      hostAliases:
+      - ip: "192.168.1.200"
+        hostnames:
+          - "updates.jenkins-ci.org"
       containers:
         - name: jenkins
           image: jenkins/jenkins:2.211
@@ -68,7 +66,7 @@ spec:
               value: "30081"
       volumes:
         - name: jenkins-home
-          hostPath: 
+          hostPath:
             path: /data/devops/jenkins
             type: Directory
       serviceAccountName: jenkins
@@ -109,7 +107,7 @@ metadata:
  namespace: devops
 rules:
  - apiGroups: [""]
-   resources: ["pods"]
+   resources: ["pods","configmaps","namespaces"]
    verbs: ["create","delete","get","list","patch","update","watch"]
  - apiGroups: [""]
    resources: ["pods/exec"]
