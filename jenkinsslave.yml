@@ -33,6 +33,8 @@ spec:
           volumeMounts:
             - name: jenkinsagent-workdir
               mountPath: /home/jenkins/workspace
+            - name: buildtools
+              mountPath: /home/jenkins/buildtools
           env:
             - name: JENKINS_URL
               value: http://192.168.1.200:30080
@@ -44,6 +46,10 @@ spec:
               value: /home/jenkins/workspace
       volumes:
         - name: jenkinsagent-workdir
-          hostPath: 
+          hostPath:
             path: /data/devops/jenkins/workspace
+            type: Directory
+        - name: buildtools
+          hostPath:
+            path: /usr/local/buildtools
             type: Directory
