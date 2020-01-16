@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-uat
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-stag
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-prod

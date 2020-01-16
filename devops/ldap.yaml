@@ -1,0 +1,60 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: openldap
+  name: openldap
+  namespace: devops
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: openldap
+  template:
+    metadata:
+      labels:
+        k8s-app: openldap
+      namespace: devops
+      name: openldap
+    spec:
+      containers:
+        - name: openldap
+          image: osixia/openldap
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 389
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: LDAP_ORGANISATION
+              value: devops
+            - name: LDAP_DOMAIN
+              value: devops.com
+            - name: LDAP_ADMIN_PASSWORD
+              value: ldap123
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: openldap
+ namespace: devops
+ labels:
+   app: openldap
+spec:
+ selector:
+   app: openldap
+ type: NodePort
+ ports:
+ - name: web
+   port: 389
+   targetPort: 389
+   nodePort: 30389

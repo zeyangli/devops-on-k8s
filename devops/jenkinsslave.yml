@@ -1,0 +1,77 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: jenkinsagent
+  name: jenkinsagent
+  namespace: devops
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: jenkinsagent
+  template:
+    metadata:
+      labels:
+        k8s-app: jenkinsagent
+      namespace: devops
+      name: jenkinsagent
+    spec:
+      containers:
+        - name: jenkinsagent
+          image: jenkinsci/jnlp-slave:3.36-1
+          securityContext:
+            privileged: true
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: jenkinsagent-workdir
+              mountPath: /home/jenkins/workspace
+            - name: buildtools
+              mountPath: /home/jenkins/buildtools
+            - name: dockersock
+              mountPath: "/var/run/docker.sock"
+            - name: dockercmd
+              mountPath: /usr/bin/docker
+            - name: kubectlconfig
+              mountPath: /home/jenkins/.kube/config
+            - name: kubectlcmd
+              mountPath: /usr/bin/kubectl
+          env:
+            - name: JENKINS_URL
+              value: http://192.168.1.200:30080
+            - name: JENKINS_SECRET
+              value: 5639cac0bf16bf15735d44bc435793417365f4dfa8fc72fb12737f3787091ae8
+            - name: JENKINS_AGENT_NAME
+              value: build01
+            - name: JENKINS_AGENT_WORKDIR
+              value: /home/jenkins/workspace
+      volumes:
+        - name: jenkinsagent-workdir
+          hostPath: 
+            path: /data/devops/jenkins/workspace
+            type: Directory
+        - name: buildtools
+          hostPath: 
+            path: /usr/local/buildtools
+            type: Directory
+        - name: kubectlconfig
+          hostPath: 
+            path: /root/.kube/config
+        - name: kubectlcmd
+          hostPath: 
+            path: /usr/bin/kubectl
+        - name: dockersock
+          hostPath: 
+            path: /var/run/docker.sock
+        - name: dockercmd
+          hostPath: 
+            path: /usr/bin/docker

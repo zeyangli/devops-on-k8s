@@ -1,0 +1,54 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: npmdemo
+  name: npmdemo
+  namespace: demo-uat
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: npmdemo
+  template:
+    metadata:
+      labels:
+        k8s-app: npmdemo
+      namespace: demo-uat
+      name: npmdemo
+    spec:
+      containers:
+        - name: npmdemo
+          image: registry.cn-beijing.aliyuncs.com/devopstest/demo-npm-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: web
+              protocol: TCP
+      serviceAccountName: npmdemo
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-app: npmdemo
+  name: npmdemo
+  namespace: demo-uat
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: npmdemo
+  name: npmdemo
+  namespace: demo-uat
+spec:
+  type: NodePort
+  ports:
+    - name: web
+      port: 80
+      targetPort: 80
+      nodePort: 30333
+  selector:
+    k8s-app: npmdemo

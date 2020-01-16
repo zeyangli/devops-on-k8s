@@ -1,0 +1,58 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: openldapadmin
+  name: openldapadmin
+  namespace: devops
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: openldapadmin
+  template:
+    metadata:
+      labels:
+        k8s-app: openldapadmin
+      namespace: devops
+      name: openldapadmin
+    spec:
+      containers:
+        - name: openldapadmin
+          image: osixia/phpldapadmin
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: PHPLDAPADMIN_HTTPS
+              value: "false"
+            - name: PHPLDAPADMIN_LDAP_HOSTS
+              value: 192.168.1.200:30389
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: openldapadmin
+ namespace: devops
+ labels:
+   app: openldapadmin
+spec:
+ selector:
+   app: openldapadmin
+ type: NodePort
+ ports:
+ - name: web
+   port: 80
+   targetPort: 80
+   nodePort: 30380

@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: devopsallservice
+  namespace: devops
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: jenkins.devops.com
+    http:
+     paths:
+     - path: /
+       backend:
+          serviceName: jenkins
+          servicePort: 30080
+  - host: gitlab.devops.com
+    http:
+     paths:
+     - path: /
+       backend:
+          serviceName: gitlab
+          servicePort: 30088

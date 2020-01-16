@@ -3,27 +3,30 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    k8s-app: artifactory
-  name: artifactory
+    k8s-app: nexus3
+  name: nexus3
   namespace: devops
 spec:
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      k8s-app: artifactory
+      k8s-app: nexus3
   template:
     metadata:
       labels:
-        k8s-app: artifactory
+        k8s-app: nexus3
       namespace: devops
-      name: artifactory
+      name: nexus3
     spec:
       containers:
-        - name: artifactory
-          image: docker.bintray.io/jfrog/artifactory-oss:latest
+        - name: nexus3
+          image: sonatype/nexus3:3.20.1
           imagePullPolicy: IfNotPresent
           ports:
+            - containerPort: 8083
+              name: web2
+              protocol: TCP
             - containerPort: 8081
               name: web
               protocol: TCP
@@ -35,27 +38,31 @@ spec:
               cpu: 500m
               memory: 512Mi
           volumeMounts:
-            - name: arthome
-              mountPath: /var/opt/jfrog/artifactory
+            - name: nexushome
+              mountPath: /nexus-data
       volumes:
-        - name: arthome
+        - name: nexushome
           hostPath:
-            path: /data/devops/artifactory
+            path: /data/devops/nexus3/nexus-data
             type: Directory
 ---
 apiVersion: v1
 kind: Service
 metadata:
- name: artifactory
+ name: nexus3
  namespace: devops
  labels:
-   k8s-app: artifactory
+   k8s-app: nexus3
 spec:
  selector:
-   k8s-app: artifactory
+   k8s-app: nexus3
  type: NodePort
  ports:
  - name: web
    port: 8081
    targetPort: 8081
-   nodePort: 30082
+   nodePort: 8081
+ - name: web2
+   port: 8083
+   targetPort: 8083
+   nodePort: 8083

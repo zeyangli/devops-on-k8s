@@ -1,33 +1,36 @@
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    k8s-app: gitlab
-  name: gitlab
+    k8s-app: jenkins
+  name: jenkins
   namespace: devops
 spec:
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      k8s-app: gitlab
+      k8s-app: jenkins
   template:
     metadata:
       labels:
-        k8s-app: gitlab
+        k8s-app: jenkins
       namespace: devops
-      name: gitlab
+      name: jenkins
     spec:
+      hostAliases:
+      - ip: "192.168.1.200"
+        hostnames:
+          - "updates.jenkins-ci.org"
       containers:
-        - name: gitlab
-          image: gitlab/gitlab-ce:12.6.0-ce.0
+        - name: jenkins
+          image: jenkins/jenkins:2.211
           imagePullPolicy: Always
           ports:
-            - containerPort: 30088
+            - containerPort: 30080
               name: web
               protocol: TCP
-            - containerPort: 22
+            - containerPort: 30081
               name: agent
               protocol: TCP
           resources:
@@ -39,80 +42,72 @@ spec:
               memory: 512Mi
           livenessProbe:
             httpGet:
-              path: /users/sign_in
-              port: 30088
+              path: /login
+              port: 30080
             initialDelaySeconds: 60
             timeoutSeconds: 5
             failureThreshold: 12
           readinessProbe:
             httpGet:
-              path: /users/sign_in
-              port: 30088
+              path: /login
+              port: 30080
             initialDelaySeconds: 60
             timeoutSeconds: 5
             failureThreshold: 12
           volumeMounts:
-            - name: gitlab-conf
-              mountPath: /etc/gitlab
-            - name: gitlab-log
-              mountPath: /var/log/gitlab
-            - name: gitlab-data
-              mountPath: /var/opt/gitlab
+            - name: jenkins-home
+              mountPath: /var/lib/jenkins
           env:
-            - name: gitlab_HOME
-              value: /var/lib/gitlab
+            - name: JENKINS_HOME
+              value: /var/lib/jenkins
+            - name: JENKINS_OPTS 
+              value: --httpPort=30080
+            - name: JENKINS_SLAVE_AGENT_PORT
+              value: "30081"
       volumes:
-        - name: gitlab-conf
+        - name: jenkins-home
           hostPath: 
-            path: /data/devops/gitlab/config
+            path: /data/devops/jenkins
             type: Directory
-        - name: gitlab-log
-          hostPath: 
-            path: /data/devops/gitlab/logs
-            type: Directory
-        - name: gitlab-data
-          hostPath: 
-            path: /data/devops/gitlab/data
-            type: Directory
-      serviceAccountName: gitlab
+      serviceAccountName: jenkins
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    k8s-app: gitlab
-  name: gitlab
+    k8s-app: jenkins
+  name: jenkins
   namespace: devops
 ---
 kind: Service
 apiVersion: v1
 metadata:
   labels:
-    k8s-app: gitlab
-  name: gitlab
+    k8s-app: jenkins
+  name: jenkins
   namespace: devops
 spec:
   type: NodePort
   ports:
     - name: web
-      port: 30088
-      targetPort: 30088
-      nodePort: 30088
+      port: 30080
+      targetPort: 30080
+      nodePort: 30080
     - name: slave
-      port: 22
-      targetPort: 22
-      nodePort: 30022
+      port: 30081
+      targetPort: 30081
+      nodePort: 30081
   selector:
-    k8s-app: gitlab
+    k8s-app: jenkins
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
- name: gitlab
+ name: jenkins
  namespace: devops
 rules:
  - apiGroups: [""]
-   resources: ["pods"]
+   resources: ["pods","configmaps","namespaces"]
    verbs: ["create","delete","get","list","patch","update","watch"]
  - apiGroups: [""]
    resources: ["pods/exec"]
@@ -127,13 +122,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
- name: gitlab
+ name: jenkins
  namespace: devops
 roleRef:
  apiGroup: rbac.authorization.k8s.io
  kind: Role
- name: gitlab
+ name: jenkins
 subjects:
  - kind: ServiceAccount
-   name: gitlab
+   name: jenkins
    namespace: devops
+
