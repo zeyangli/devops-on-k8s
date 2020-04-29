@@ -25,7 +25,7 @@ spec:
       containers:
         - name: jenkins
           image: jenkins/jenkins:2.211
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 30080
               name: web

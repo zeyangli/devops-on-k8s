@@ -21,8 +21,8 @@ spec:
     spec:
       containers:
         - name: gitlab
-          image: gitlab/gitlab-ce:12.6.0-ce.0
-          imagePullPolicy: Always
+          image: gitlab/gitlab-ce:12.9.0-ce.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 30088
               name: web
@@ -32,8 +32,8 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 1000m
-              memory: 4Gi
+              cpu: 2000m
+              memory: 8Gi
             requests:
               cpu: 500m
               memory: 512Mi
