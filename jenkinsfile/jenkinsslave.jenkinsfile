@@ -15,7 +15,7 @@ metadata:
 spec:
 containers:
   - name: jenkinsagent
-    image: jenkinsci/jnlp-slave:3.36-1
+    image: jenkins/inbound-agent:4.3-4
     imagePullPolicy: IfNotPresent
     resources:
       limits:
