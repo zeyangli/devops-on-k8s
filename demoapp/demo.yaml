@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: demoapp
-          image: registry.cn-beijing.aliyuncs.com/devopstest/demo-java-service:master
+          image: nginx
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
